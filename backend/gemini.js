@@ -1,7 +1,10 @@
 import axios from "axios"
-const geminiResponse=async (command,assistantName,userName)=>{
-try {
-    const apiUrl=process.env.GEMINI_API_URL
+
+const geminiResponse = async (command, assistantName, userName) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
     const prompt = `You are a virtual assistant named ${assistantName} created by ${userName}. 
 You are not Google. You will now behave like a voice-enabled assistant.
 
@@ -42,19 +45,66 @@ Important:
 now your userInput- ${command}
 `;
 
+    const requestPayload = {
+      contents: [
+        {
+          parts: [{ text: prompt }]
+        }
+      ]
+    };
 
+    console.log("=== Gemini API Request Payload ===");
+    console.log("URL:", `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey ? "HIDDEN" : "MISSING"}`);
+    console.log("Payload:", JSON.stringify(requestPayload, null, 2));
 
+    const result = await axios.post(apiUrl, requestPayload);
 
+    console.log("=== Gemini API Response Data ===");
+    console.log(JSON.stringify(result.data, null, 2));
 
-    const result=await axios.post(apiUrl,{
-    "contents": [{
-    "parts":[{"text": prompt}]
-    }]
-    })
-return result.data.candidates[0].content.parts[0].text
-} catch (error) {
-    console.log(error)
-}
+    if (
+      result.data &&
+      result.data.candidates &&
+      result.data.candidates[0] &&
+      result.data.candidates[0].content &&
+      result.data.candidates[0].content.parts &&
+      result.data.candidates[0].content.parts[0]
+    ) {
+      return result.data.candidates[0].content.parts[0].text;
+    } else {
+      throw new Error("Invalid response format from Gemini API");
+    }
+
+  } catch (error) {
+    console.error("=== Gemini API Error ===");
+    if (error.response) {
+      console.error("Status Code:", error.response.status);
+      console.error("Response Data:", JSON.stringify(error.response.data, null, 2));
+      
+      const status = error.response.status;
+      let friendlyMessage = "Sorry, I am facing a connection issue. Please try again.";
+      if (status === 400) {
+        friendlyMessage = "I received a bad request. Please check your query format.";
+      } else if (status === 403) {
+        friendlyMessage = "Authentication error. The Gemini API key appears to be invalid or restricted.";
+      } else if (status === 404) {
+        friendlyMessage = "The Gemini API service endpoint or model was not found.";
+      }
+      
+      return JSON.stringify({
+        type: "general",
+        userInput: command,
+        response: friendlyMessage
+      });
+    } else {
+      console.error("Error Message:", error.message);
+      return JSON.stringify({
+        type: "general",
+        userInput: command,
+        response: "I couldn't connect to the AI model. Please verify your network connection."
+      });
+    }
+  }
 }
 
 export default geminiResponse

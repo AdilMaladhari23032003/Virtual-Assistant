@@ -6,6 +6,8 @@ import Customize from './pages/Customize'
 import { userDataContext } from './context/UserContext'
 import Home from './pages/Home'
 import Customize2 from './pages/Customize2'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 function App() {
   const {userData,setUserData}=useContext(userDataContext)
@@ -16,6 +18,8 @@ function App() {
      <Route path='/signin' element={!userData?<SignIn/>:<Navigate to={"/"}/>}/>
       <Route path='/customize' element={userData?<Customize/>:<Navigate to={"/signup"}/>}/>
        <Route path='/customize2' element={userData?<Customize2/>:<Navigate to={"/signup"}/>}/>
+       <Route path='/forgot-password' element={!userData?<ForgotPassword/>:<Navigate to={"/"}/>}/>
+       <Route path='/reset-password/:token' element={!userData?<ResetPassword/>:<Navigate to={"/"}/>}/>
    </Routes>
   )
 }

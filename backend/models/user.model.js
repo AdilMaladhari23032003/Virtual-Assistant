@@ -17,12 +17,18 @@ const userSchema=new mongoose.Schema({
     assistantName:{
         type:String
     },
-     assistantImage:{
+    assistantImage:{
         type:String
     },
     history:[
         {type:String}
-    ]
+    ],
+    resetPasswordToken:{
+        type:String
+    },
+    resetPasswordExpires:{
+        type:Date
+    }
 
 },{timestamps:true})
 

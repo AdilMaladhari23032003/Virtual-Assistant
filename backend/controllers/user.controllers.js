@@ -46,15 +46,27 @@ export const askToAssistant=async (req,res)=>{
       user.save()
       const userName=user.name
       const assistantName=user.assistantName
-      const result=await geminiResponse(command,assistantName,userName)
+      const result = await geminiResponse(command, assistantName, userName)
 
-      const jsonMatch=result.match(/{[\s\S]*}/)
-      if(!jsonMatch){
-         return res.ststus(400).json({response:"sorry, i can't understand"})
+      if (!result) {
+         return res.status(500).json({ response: "Failed to get response from assistant." })
       }
-      const gemResult=JSON.parse(jsonMatch[0])
+
+      const jsonMatch = result.match(/{[\s\S]*}/)
+      if (!jsonMatch) {
+         return res.status(400).json({ response: "sorry, i can't understand" })
+      }
+
+      let gemResult;
+      try {
+         gemResult = JSON.parse(jsonMatch[0])
+      } catch (err) {
+         console.error("Error parsing Gemini JSON response:", err);
+         return res.status(500).json({ response: "Failed to parse assistant response." })
+      }
+
       console.log(gemResult)
-      const type=gemResult.type
+      const type = gemResult.type
 
       switch(type){
          case 'get-date' :

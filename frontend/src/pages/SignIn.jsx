@@ -42,10 +42,13 @@ try {
 {!showPassword && <IoEye className='absolute top-[18px] right-[20px] w-[25px] h-[25px] text-[white] cursor-pointer' onClick={()=>setShowPassword(true)}/>}
   {showPassword && <IoEyeOff className='absolute top-[18px] right-[20px] w-[25px] h-[25px] text-[white] cursor-pointer' onClick={()=>setShowPassword(false)}/>}
 </div>
+<div className='w-full flex justify-end px-[10px]'>
+  <span className='text-blue-400 text-[16px] cursor-pointer hover:underline' onClick={()=>navigate("/forgot-password")}>Forgot Password?</span>
+</div>
 {err.length>0 && <p className='text-red-500 text-[17px]'>
   *{err}
   </p>}
-<button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold  bg-white rounded-full text-[19px] ' disabled={loading}>{loading?"Loading...":"Sign In"}</button>
+<button className='min-w-[150px] h-[60px] mt-[20px] text-black font-semibold  bg-white rounded-full text-[19px] ' disabled={loading}>{loading?"Loading...":"Sign In"}</button>
 
 <p className='text-[white] text-[18px] cursor-pointer' onClick={()=>navigate("/signup")}>Want to create a new account ? <span className='text-blue-400'>Sign Up</span></p>
  </form>
