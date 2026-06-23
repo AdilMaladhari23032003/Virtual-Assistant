@@ -16,7 +16,13 @@ function Home() {
   const recognitionRef=useRef(null)
   const [ham,setHam]=useState(false)
   const isRecognizingRef=useRef(false)
+  const isManualSpeakRef=useRef(false)
+  const userDataRef=useRef(userData)
   const synth=window.speechSynthesis
+
+  useEffect(() => {
+    userDataRef.current = userData;
+  }, [userData]);
 
   const handleLogOut=async ()=>{
     try {
@@ -95,6 +101,26 @@ synth.speak(utterence);
 
   }
 
+  const handleAvatarClick = () => {
+    if (isSpeakingRef.current) {
+      synth.cancel();
+      isSpeakingRef.current = false;
+    }
+    isManualSpeakRef.current = true;
+    setAiText("Listening to you directly...");
+    
+    if (!isRecognizingRef.current) {
+      try {
+        recognitionRef.current?.start();
+        console.log("Manual recognition started");
+      } catch (error) {
+        if (error.name !== "InvalidStateError") {
+          console.error("Start error:", error);
+        }
+      }
+    }
+  };
+
 useEffect(() => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
@@ -163,15 +189,25 @@ useEffect(() => {
 
   recognition.onresult = async (e) => {
     const transcript = e.results[e.results.length - 1][0].transcript.trim();
-    if (transcript.toLowerCase().includes(userData.assistantName.toLowerCase())) {
-      setAiText("");
+    const assistantName = userDataRef.current?.assistantName || "";
+    const shouldRespond = isManualSpeakRef.current || 
+      (assistantName && transcript.toLowerCase().includes(assistantName.toLowerCase()));
+
+    if (shouldRespond) {
+      isManualSpeakRef.current = false;
+      setAiText("Processing...");
       setUserText(transcript);
       recognition.stop();
       isRecognizingRef.current = false;
       setListening(false);
+      
       const data = await getGeminiResponse(transcript);
-      handleCommand(data);
-      setAiText(data.response);
+      if (data) {
+        handleCommand(data);
+        setAiText(data.response || "No response received");
+      } else {
+        setAiText("Failed to get response from assistant");
+      }
       setUserText("");
     }
   };
@@ -216,8 +252,12 @@ useEffect(() => {
       </div>
       <button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold absolute hidden lg:block top-[20px] right-[20px]  bg-white rounded-full cursor-pointer text-[19px] ' onClick={handleLogOut}>Log Out</button>
       <button className='min-w-[150px] h-[60px] mt-[30px] text-black font-semibold  bg-white absolute top-[100px] right-[20px] rounded-full cursor-pointer text-[19px] px-[20px] py-[10px] hidden lg:block ' onClick={()=>navigate("/customize")}>Customize your Assistant</button>
-      <div className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg'>
-<img src={userData?.assistantImage} alt="" className='h-full object-cover'/>
+      <div 
+        className='w-[300px] h-[400px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-300 border-4 border-transparent hover:border-blue-500'
+        onClick={handleAvatarClick}
+        title="Click to speak directly"
+      >
+        <img src={userData?.assistantImage} alt="" className='h-full object-cover'/>
       </div>
       <h1 className='text-white text-[18px] font-semibold'>I'm {userData?.assistantName}</h1>
       {!aiText && <img src={userImg} alt="" className='w-[200px]'/>}

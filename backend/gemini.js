@@ -2,8 +2,8 @@ import axios from "axios"
 
 const geminiResponse = async (command, assistantName, userName) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
 
     const prompt = `You are a virtual assistant named ${assistantName} created by ${userName}. 
 You are not Google. You will now behave like a voice-enabled assistant.
@@ -46,37 +46,46 @@ now your userInput- ${command}
 `;
 
     const requestPayload = {
-      contents: [
+      model: "google/gemini-2.5-flash",
+      messages: [
         {
-          parts: [{ text: prompt }]
+          role: "user",
+          content: prompt
         }
       ]
     };
 
-    console.log("=== Gemini API Request Payload ===");
-    console.log("URL:", `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey ? "HIDDEN" : "MISSING"}`);
-    console.log("Payload:", JSON.stringify(requestPayload, null, 2));
+    console.log("=== OpenRouter API Request ===");
+    console.log("URL:", apiUrl);
+    console.log("Model:", requestPayload.model);
+    console.log("API Key:", apiKey ? "PRESENT" : "MISSING");
 
-    const result = await axios.post(apiUrl, requestPayload);
+    const result = await axios.post(apiUrl, requestPayload, {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:8000",
+        "X-Title": "Virtual Assistant"
+      }
+    });
 
-    console.log("=== Gemini API Response Data ===");
+    console.log("=== OpenRouter API Response ===");
     console.log(JSON.stringify(result.data, null, 2));
 
     if (
       result.data &&
-      result.data.candidates &&
-      result.data.candidates[0] &&
-      result.data.candidates[0].content &&
-      result.data.candidates[0].content.parts &&
-      result.data.candidates[0].content.parts[0]
+      result.data.choices &&
+      result.data.choices[0] &&
+      result.data.choices[0].message &&
+      result.data.choices[0].message.content
     ) {
-      return result.data.candidates[0].content.parts[0].text;
+      return result.data.choices[0].message.content;
     } else {
-      throw new Error("Invalid response format from Gemini API");
+      throw new Error("Invalid response format from OpenRouter API");
     }
 
   } catch (error) {
-    console.error("=== Gemini API Error ===");
+    console.error("=== OpenRouter API Error ===");
     if (error.response) {
       console.error("Status Code:", error.response.status);
       console.error("Response Data:", JSON.stringify(error.response.data, null, 2));
@@ -85,10 +94,16 @@ now your userInput- ${command}
       let friendlyMessage = "Sorry, I am facing a connection issue. Please try again.";
       if (status === 400) {
         friendlyMessage = "I received a bad request. Please check your query format.";
+      } else if (status === 401) {
+        friendlyMessage = "Authentication error. The API key appears to be invalid.";
+      } else if (status === 402) {
+        friendlyMessage = "Insufficient credits. Please add credits to your OpenRouter account.";
       } else if (status === 403) {
-        friendlyMessage = "Authentication error. The Gemini API key appears to be invalid or restricted.";
+        friendlyMessage = "Authentication error. The API key appears to be restricted.";
       } else if (status === 404) {
-        friendlyMessage = "The Gemini API service endpoint or model was not found.";
+        friendlyMessage = "The API model was not found.";
+      } else if (status === 429) {
+        friendlyMessage = "Too many requests. Please wait a moment and try again.";
       }
       
       return JSON.stringify({

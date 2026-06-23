@@ -10,8 +10,21 @@ import geminiResponse from "./gemini.js"
 
 
 const app=express()
+const allowedOrigins = [
+    "https://virtual-assistant-tryy.onrender.com",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174"
+];
 app.use(cors({
-    origin:"https://virtual-assistant-tryy.onrender.com",
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+    },
     credentials:true
 }))
 const port=process.env.PORT || 5000

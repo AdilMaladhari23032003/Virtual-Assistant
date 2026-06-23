@@ -2,7 +2,9 @@ import axios from 'axios'
 import React, { createContext, useEffect, useState } from 'react'
 export const userDataContext=createContext()
 function UserContext({children}) {
-    const serverUrl="https://virtua-assistant.onrender.com"
+    const serverUrl = import.meta.env.MODE === 'development' 
+      ? "http://localhost:8000" 
+      : "https://virtua-assistant.onrender.com"
     const [userData,setUserData]=useState(null)
     const [frontendImage,setFrontendImage]=useState(null)
      const [backendImage,setBackendImage]=useState(null)
@@ -18,12 +20,17 @@ function UserContext({children}) {
     }
 
     const getGeminiResponse=async (command)=>{
-try {
-  const result=await axios.post(`${serverUrl}/api/user/asktoassistant`,{command},{withCredentials:true})
-  return result.data
-} catch (error) {
-  console.log(error)
-}
+        try {
+          const result=await axios.post(`${serverUrl}/api/user/asktoassistant`,{command},{withCredentials:true})
+          return result.data
+        } catch (error) {
+          console.error("Error in getGeminiResponse:", error)
+          return {
+            type: "general",
+            userInput: command,
+            response: error.response?.data?.response || "I am having trouble connecting to the server. Please try again."
+          }
+        }
     }
 
     useEffect(()=>{
