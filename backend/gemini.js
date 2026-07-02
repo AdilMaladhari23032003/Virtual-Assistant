@@ -2,8 +2,9 @@ import axios from "axios"
 
 const geminiResponse = async (command, assistantName, userName) => {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+    const apiKey = process.env.NVIDIA_API_KEY;
+    const apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+    const modelName = "nvidia/llama-3.3-nemotron-super-49b-v1";
 
     const prompt = `You are a virtual assistant named ${assistantName} created by ${userName}. 
 You are not Google. You will now behave like a voice-enabled assistant.
@@ -46,7 +47,7 @@ now your userInput- ${command}
 `;
 
     const requestPayload = {
-      model: "google/gemini-2.5-flash",
+      model: modelName,
       messages: [
         {
           role: "user",
@@ -55,7 +56,7 @@ now your userInput- ${command}
       ]
     };
 
-    console.log("=== OpenRouter API Request ===");
+    console.log("=== NVIDIA API Request ===");
     console.log("URL:", apiUrl);
     console.log("Model:", requestPayload.model);
     console.log("API Key:", apiKey ? "PRESENT" : "MISSING");
@@ -69,7 +70,7 @@ now your userInput- ${command}
       }
     });
 
-    console.log("=== OpenRouter API Response ===");
+    console.log("=== NVIDIA API Response ===");
     console.log(JSON.stringify(result.data, null, 2));
 
     if (
@@ -81,11 +82,11 @@ now your userInput- ${command}
     ) {
       return result.data.choices[0].message.content;
     } else {
-      throw new Error("Invalid response format from OpenRouter API");
+      throw new Error("Invalid response format from NVIDIA API");
     }
 
   } catch (error) {
-    console.error("=== OpenRouter API Error ===");
+    console.error("=== NVIDIA API Error ===");
     if (error.response) {
       console.error("Status Code:", error.response.status);
       console.error("Response Data:", JSON.stringify(error.response.data, null, 2));
@@ -97,7 +98,7 @@ now your userInput- ${command}
       } else if (status === 401) {
         friendlyMessage = "Authentication error. The API key appears to be invalid.";
       } else if (status === 402) {
-        friendlyMessage = "Insufficient credits. Please add credits to your OpenRouter account.";
+        friendlyMessage = "Insufficient credits. Please add credits to your NVIDIA account.";
       } else if (status === 403) {
         friendlyMessage = "Authentication error. The API key appears to be restricted.";
       } else if (status === 404) {
